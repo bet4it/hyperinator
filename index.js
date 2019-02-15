@@ -14,18 +14,18 @@ function generateQueue(converted, initial) {
         q.push({
           action: 'split',
           mode: converted.type,
-          pane: {index: cell.id}
+          index: cell.id
         })
       } else {
         q.push({
           action: 'jump',
-          pane: {index: cell.id}
+          index: cell.id
         })
       }
       if (initial || i > 0) {
         q.push({
           action: 'cmd',
-          pane: {index: cell.id}
+          index: cell.id
         })
       }
     })
@@ -38,58 +38,121 @@ function generateQueue(converted, initial) {
 
 // Hyperlayout instance
 class Hyperlayout {
-  constructor({config, cwd}, store) {
-    this.cwd = cwd
+  constructor(config, store) {
     this.store = store
     this.panes = []
+    this.queue = []
     this.paneNum = 0
     this.lastIndex = 0
     this.knownUids = []
-    this.layoutTree = {}
+    let gFocusIndex
 
-    const layoutPtr = {s: config.layout.substr(5)}
-    this.layoutTree = this.layoutConstruct(null, layoutPtr)
-    Array.from(new Array(this.paneNum), (x, i) =>
-               this.panes.push({index: i, cmd: config.panes[i]}))
-    this.queue = generateQueue(this.layoutTree, true)
+    config.windows.forEach(win => {
+      let startDir
+      if (config.start_directory) {
+        untildify(config.start_directory)
+      }
+      let focusIndex
+      if (win.start_directory) {
+        startDir = untildify(win.start_directory)
+      }
+      win.panes.forEach(cmd => {
+        let cwd = startDir
+        const index = this.panes.length
+        if (cmd) {
+          if (cmd.start_directory) {
+            cwd = untildify(cmd.start_directory)
+          }
+          if (cmd.focus) {
+            focusIndex = index
+          }
+        }
+        this.panes.push({index, cwd, cmd})
+      })
+      if (win.focus) {
+        if (typeof focusIndex === 'undefined') {
+          gFocusIndex = this.panes.length - 1
+        } else {
+          gFocusIndex = focusIndex
+        }
+      }
+
+      const layoutPtr = {s: win.layout.substr(5)}
+      const layoutTree = this.layoutConstruct(null, layoutPtr)
+      this.queue = this.queue.concat(generateQueue(layoutTree, true))
+      this.queue.push({
+        action: 'resize',
+        index: this.paneNum - 1,
+        layoutTree
+      })
+      if (typeof focusIndex !== 'undefined') {
+        this.queue.push({
+          action: 'jump',
+          index: focusIndex
+        })
+      }
+      this.queue.push({
+        action: 'split',
+        index: this.paneNum
+      })
+    })
+
+    this.queue.pop()
+    if (typeof gFocusIndex !== 'undefined') {
+      this.queue.push({
+        action: 'jump',
+        index: gFocusIndex
+      })
+    }
+
     this.work()
   }
   work() {
-    const {sessions} = this.store.getState()
-    const {lastIndex, cwd} = this
+    const {sessions, termGroups} = this.store.getState()
+    const {lastIndex} = this
     const {activeUid} = sessions
-    const pane = this.panes[lastIndex]
+    const lastPane = this.panes[lastIndex]
 
     if (this.queue.length > 0) {
       const item = this.queue.shift()
-      const {index} = item.pane
+      const {index} = item
+      const pane = this.panes[index]
 
-      if (!pane.uid) {
-        this.panes[lastIndex].uid = activeUid
+      if (!lastPane.uid) {
+        lastPane.uid = activeUid
       }
 
       this.lastIndex = index
       this.lastUid = activeUid
       switch (item.action) {
         case 'split':
-          requestSession(cwd, item.mode)
+          requestSession(pane.cwd, item.mode)
           break
         case 'cmd':
-          runCommand(activeUid, pane.cmd)
+          if (pane.cmd) {
+            if (typeof pane.cmd === 'string') {
+              runCommand(activeUid, pane.cmd)
+            } else if (typeof pane.cmd.shell_command === 'string') {
+              runCommand(activeUid, pane.cmd.shell_command)
+            } else if (pane.cmd.shell_command instanceof Array) {
+              pane.cmd.shell_command.forEach(cmd => runCommand(activeUid, cmd))
+            }
+          }
+          this.work()
+          break
+        case 'resize':
+          this.layoutResize(item.layoutTree, termGroups.activeRootGroup)
           this.work()
           break
         case 'jump':
         default: {
-          const jumpTo = this.panes[index].uid
+          const jumpTo = pane.uid
           if (jumpTo) {
             focusUid(this.store, jumpTo)
           }
           this.work()
         }
       }
-    } else {
-      this.layoutResize(this.layoutTree,
-                        this.store.getState().termGroups.activeRootGroup)
     }
   }
   // A javascript rewrite of layout_construct in tmux
@@ -218,11 +281,8 @@ exports.middleware = store => next => action => {
   if (type === 'SESSION_ADD_DATA') {
     const testedData = /^\[hyperlayout config]:(.*)/.exec(data)
     if (testedData && testedData[1]) {
-      const cfg = yaml.safeLoad(fs.readFileSync(testedData[1], 'utf8'))
-      const cwd = untildify(cfg.root)
-      const windows = cfg.windows[0]
-      const config = windows[Object.keys(windows)[0]]
-      hyperlayout = new Hyperlayout({cwd, config}, store)
+      const config = yaml.safeLoad(fs.readFileSync(testedData[1], 'utf8'))
+      hyperlayout = new Hyperlayout(config, store)
       return
     }
   }
