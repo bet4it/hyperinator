@@ -4,6 +4,13 @@ const untildify = require('untildify')
 
 let hyperlayout
 
+function findBySession(termGroupState, sessionUid) {
+  const {termGroups} = termGroupState
+  return Object.keys(termGroups)
+    .map(uid => termGroups[uid])
+    .find(group => group.sessionUid === sessionUid)
+}
+
 // Generate Command queue from converted layout tree
 function generateQueue(converted, initial) {
   let q = []
@@ -46,6 +53,18 @@ class Hyperlayout {
     this.lastIndex = 0
     this.knownUids = []
     let gFocusIndex
+
+    for (const [idx, win] of config.windows.entries()) {
+      const i = win.panes.findIndex(cmd => cmd && cmd.reuse)
+      if (i >= 0) {
+        const tmpPane = config.windows[0].panes[0]
+        config.windows[0].panes[0] = win.panes[i]
+        win.panes[i] = tmpPane
+        this.reuseIndex = i + config.windows.slice(0, idx)
+          .reduce((acc, cur) => acc + cur.panes.length, 0)
+        break
+      }
+    }
 
     config.windows.forEach(win => {
       let startDir
@@ -153,6 +172,12 @@ class Hyperlayout {
           this.work()
         }
       }
+    } else if (this.reuseIndex > 0) {
+      this.store.dispatch({
+        type: 'UI_SWITCH_SESSIONS',
+        from: this.knownUids[0],
+        to: this.knownUids[this.reuseIndex]
+      })
     }
   }
   // A javascript rewrite of layout_construct in tmux
@@ -281,8 +306,10 @@ exports.middleware = store => next => action => {
   if (type === 'SESSION_ADD_DATA') {
     const testedData = /^\[hyperlayout config]:(.*)/.exec(data)
     if (testedData && testedData[1]) {
+      const {sessions} = store.getState()
       const config = yaml.safeLoad(fs.readFileSync(testedData[1], 'utf8'))
       hyperlayout = new Hyperlayout(config, store)
+      hyperlayout.knownUids.push(sessions.activeUid)
       return
     }
   }
@@ -298,4 +325,23 @@ exports.middleware = store => next => action => {
     }
   }
   next(action)
+}
+
+exports.reduceTermGroups = (state, action) => {
+  switch (action.type) {
+    case 'UI_SWITCH_SESSIONS' : {
+      const fromTermGroupUid = findBySession(state, action.from).uid
+      const toTermGroupUid = findBySession(state, action.to).uid
+      if (!fromTermGroupUid || !toTermGroupUid) {
+        return state
+      }
+      state = state
+        .setIn(['termGroups', fromTermGroupUid, 'sessionUid'], action.to)
+        .setIn(['termGroups', toTermGroupUid, 'sessionUid'], action.from)
+      break
+    }
+    default:
+      break
+  }
+  return state
 }
