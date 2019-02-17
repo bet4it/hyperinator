@@ -2,7 +2,7 @@ const fs = require('fs')
 const yaml = require('js-yaml')
 const untildify = require('untildify')
 
-let hyperlayout
+let hyperinator
 
 function findBySession(termGroupState, sessionUid) {
   const {termGroups} = termGroupState
@@ -43,8 +43,8 @@ function generateQueue(converted, initial) {
   return q
 }
 
-// Hyperlayout instance
-class Hyperlayout {
+// Hyperinator instance
+class Hyperinator {
   constructor(config, store) {
     this.store = store
     this.panes = []
@@ -302,25 +302,25 @@ function termgroupResize({dispatch}, uid, sizes) {
 exports.middleware = store => next => action => {
   const {type, data, uid} = action
 
-  // Check for hyperlayout config
+  // Check for hyperinator config
   if (type === 'SESSION_ADD_DATA') {
-    const testedData = /^\[hyperlayout config]:(.*)/.exec(data)
+    const testedData = /^\[hyperinator config]:(.*)/.exec(data)
     if (testedData && testedData[1]) {
       const {sessions} = store.getState()
       const config = yaml.safeLoad(fs.readFileSync(testedData[1], 'utf8'))
-      hyperlayout = new Hyperlayout(config, store)
-      hyperlayout.knownUids.push(sessions.activeUid)
+      hyperinator = new Hyperinator(config, store)
+      hyperinator.knownUids.push(sessions.activeUid)
       return
     }
   }
 
  // Check for sessions
-  if (type === 'SESSION_ADD' && hyperlayout) {
+  if (type === 'SESSION_ADD' && hyperinator) {
     // Check if it's a new session
-    if (!hyperlayout.knownUids.includes(uid)) {
-      hyperlayout.knownUids.push(uid)
+    if (!hyperinator.knownUids.includes(uid)) {
+      hyperinator.knownUids.push(uid)
       setTimeout(() => {
-        hyperlayout.work()
+        hyperinator.work()
       }, 0)
     }
   }

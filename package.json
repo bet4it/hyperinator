@@ -1,12 +1,12 @@
 {
-  "name": "hyperlayout",
+  "name": "hyperinator",
   "version": "0.2.1",
-  "description": "Layout presets for Hyper.app",
-  "repository": "timolins/hyperlayout",
-  "author": "Timo Lins <me@timo.sh>",
+  "description": "A layout automation plugin for Hyper.app",
+  "repository": "bet4it/hyperinator",
+  "author": "Bet4 <0xbet4@gmail.com>",
   "license": "MIT",
   "bin": {
-    "hyperlayout": "bin/hyperlayout"
+    "hyperinator": "bin/hyperinator"
   },
   "keywords": [
     "hyper"
