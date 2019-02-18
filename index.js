@@ -15,7 +15,7 @@ function findBySession(termGroupState, sessionUid) {
 function generateQueue(converted, initial) {
   let q = []
 
-  if (converted.cells instanceof Array) {
+  if (Array.isArray(converted.cells)) {
     converted.cells.forEach((cell, i) => {
       if (i > 0) {
         q.push({
@@ -126,6 +126,7 @@ class Hyperinator {
 
     this.work()
   }
+
   work() {
     const {sessions, termGroups} = this.store.getState()
     const {lastIndex} = this
@@ -153,7 +154,7 @@ class Hyperinator {
               runCommand(activeUid, pane.cmd)
             } else if (typeof pane.cmd.shell_command === 'string') {
               runCommand(activeUid, pane.cmd.shell_command)
-            } else if (pane.cmd.shell_command instanceof Array) {
+            } else if (Array.isArray(pane.cmd.shell_command)) {
               pane.cmd.shell_command.forEach(cmd => runCommand(activeUid, cmd))
             }
           }
@@ -180,6 +181,7 @@ class Hyperinator {
       })
     }
   }
+
   // A javascript rewrite of layout_construct in tmux
   layoutConstruct(lcParent, layoutPtr) {
     const posPattern = /^(\d+)x(\d+),(\d+),(\d+)(.*)$/
@@ -237,8 +239,9 @@ class Hyperinator {
     layoutPtr.s = layoutPtr.s.substr(1)
     return lc
   }
+
   layoutResize(layoutTree, termGroupUid) {
-    const termGroups = this.store.getState().termGroups.termGroups
+    const {termGroups} = this.store.getState().termGroups
     const termGroupTree = termGroups[termGroupUid]
     if (layoutTree.cells.length > 0 &&
        layoutTree.cells.length === termGroupTree.children.length) {
@@ -250,7 +253,7 @@ class Hyperinator {
       }
       termgroupResize(this.store, termGroupUid, sizes)
       layoutTree.cells.forEach((c, i) =>
-                               this.layoutResize(c, termGroupTree.children[i]))
+        this.layoutResize(c, termGroupTree.children[i]))
     }
   }
 }
@@ -314,7 +317,7 @@ exports.middleware = store => next => action => {
     }
   }
 
- // Check for sessions
+  // Check for sessions
   if (type === 'SESSION_ADD' && hyperinator) {
     // Check if it's a new session
     if (!hyperinator.knownUids.includes(uid)) {
@@ -329,7 +332,7 @@ exports.middleware = store => next => action => {
 
 exports.reduceTermGroups = (state, action) => {
   switch (action.type) {
-    case 'UI_SWITCH_SESSIONS' : {
+    case 'UI_SWITCH_SESSIONS': {
       const fromTermGroupUid = findBySession(state, action.from).uid
       const toTermGroupUid = findBySession(state, action.to).uid
       if (!fromTermGroupUid || !toTermGroupUid) {

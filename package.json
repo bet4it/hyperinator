@@ -18,17 +18,26 @@
     "esnext": true,
     "space": true,
     "semicolon": false,
+    "rules": {
+      "padding-line-between-statements": [
+        "error", {
+          "blankLine": "any",
+          "prev": "multiline-block-like",
+          "next": "*"
+        }
+      ]
+    },
     "env": [
       "node",
       "browser"
     ]
   },
   "devDependencies": {
-    "xo": "^0.17.1"
+    "xo": "^0.24.0"
   },
   "dependencies": {
     "js-yaml": "^3.12.0",
     "untildify": "^3.0.3",
-    "debug": "^2.4.1"
+    "debug": "^4.1.1"
   }
 }
