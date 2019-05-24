@@ -175,7 +175,7 @@ class Hyperinator {
       }
     } else if (this.reuseIndex > 0) {
       this.store.dispatch({
-        type: 'UI_SWITCH_SESSIONS',
+        type: 'HYPERINATOR_SWITCH',
         from: this.knownUids[0],
         to: this.knownUids[this.reuseIndex]
       })
@@ -309,10 +309,10 @@ exports.middleware = store => next => action => {
   if (type === 'SESSION_ADD_DATA') {
     const testedData = /^\[hyperinator config]:(.*)/.exec(data)
     if (testedData && testedData[1]) {
-      const {sessions} = store.getState()
-      const config = yaml.safeLoad(fs.readFileSync(testedData[1], 'utf8'))
-      hyperinator = new Hyperinator(config, store)
-      hyperinator.knownUids.push(sessions.activeUid)
+      store.dispatch({
+        type: 'HYPERINATOR_LOAD',
+        data: testedData[1]
+      })
       return
     }
   }
@@ -327,12 +327,21 @@ exports.middleware = store => next => action => {
       }, 0)
     }
   }
+
+  // Load a config
+  if (type === 'HYPERINATOR_LOAD') {
+    const {sessions} = store.getState()
+    const config = yaml.safeLoad(fs.readFileSync(data, 'utf8'))
+    hyperinator = new Hyperinator(config, store)
+    hyperinator.knownUids.push(sessions.activeUid)
+    return
+  }
   next(action)
 }
 
 exports.reduceTermGroups = (state, action) => {
   switch (action.type) {
-    case 'UI_SWITCH_SESSIONS': {
+    case 'HYPERINATOR_SWITCH': {
       const fromTermGroupUid = findBySession(state, action.from).uid
       const toTermGroupUid = findBySession(state, action.to).uid
       if (!fromTermGroupUid || !toTermGroupUid) {
