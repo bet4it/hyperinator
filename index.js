@@ -52,8 +52,30 @@ class Hyperinator {
     this.paneNum = 0
     this.lastIndex = 0
     this.knownUids = []
+
+    let gStartDir
+    let gShell
+    let gShellArgs
     let gFocusIndex
 
+    if (config.start_directory) {
+      gStartDir = untildify(config.start_directory)
+    }
+
+    let gOpts = config.global_options
+    if (gOpts) {
+      Object.keys(gOpts).forEach(opt => {
+        if (opt === 'default-shell') {
+          gShell = gOpts[opt]
+        }
+        if (opt === 'default-shell-args') {
+          gShellArgs = gOpts[opt]
+          if(!Array.isArray(gShellArgs)) {
+            gShellArgs = [gShellArgs]
+          }
+        }
+      })
+    }
     for (const [idx, win] of config.windows.entries()) {
       const i = win.panes.findIndex(cmd => cmd && cmd.reuse)
       if (i >= 0) {
@@ -67,15 +89,13 @@ class Hyperinator {
     }
 
     config.windows.forEach(win => {
-      let startDir
-      if (config.start_directory) {
-        untildify(config.start_directory)
-      }
       let focusIndex
+      let startDir = gStartDir
       if (win.start_directory) {
         startDir = untildify(win.start_directory)
       }
       win.panes.forEach(cmd => {
+        let args = {shell: gShell, shellArgs: gShellArgs}
         let cwd = startDir
         const index = this.panes.length
         if (cmd) {
@@ -86,7 +106,10 @@ class Hyperinator {
             focusIndex = index
           }
         }
-        this.panes.push({index, cwd, cmd})
+        if (cwd) {
+          args.cwd = cwd
+        }
+        this.panes.push({index, args, cmd})
       })
       if (win.focus) {
         if (typeof focusIndex === 'undefined') {
@@ -146,7 +169,7 @@ class Hyperinator {
       this.lastUid = activeUid
       switch (item.action) {
         case 'split':
-          requestSession(pane.cwd, item.mode)
+          requestSession(pane.args, item.mode)
           break
         case 'cmd':
           if (pane.cmd) {
@@ -259,8 +282,8 @@ class Hyperinator {
 }
 
 // Request new Session (Tab, Pane)
-function requestSession(cwd, mode) {
-  const payload = {cwd}
+function requestSession(args, mode) {
+  const payload = args
   switch (mode) {
     case 'LAYOUT_LEFTRIGHT':
       payload.splitDirection = 'VERTICAL'
