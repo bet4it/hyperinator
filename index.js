@@ -62,7 +62,7 @@ class Hyperinator {
       gStartDir = untildify(config.start_directory)
     }
 
-    let gOpts = config.global_options
+    const gOpts = config.global_options
     if (gOpts) {
       Object.keys(gOpts).forEach(opt => {
         if (opt === 'default-shell') {
@@ -70,7 +70,7 @@ class Hyperinator {
         }
         if (opt === 'default-shell-args') {
           gShellArgs = gOpts[opt]
-          if(!Array.isArray(gShellArgs)) {
+          if (!Array.isArray(gShellArgs)) {
             gShellArgs = [gShellArgs]
           }
         }
@@ -95,7 +95,7 @@ class Hyperinator {
         startDir = untildify(win.start_directory)
       }
       win.panes.forEach(cmd => {
-        let args = {shell: gShell, shellArgs: gShellArgs}
+        const args = {shell: gShell, shellArgs: gShellArgs}
         let cwd = startDir
         const index = this.panes.length
         if (cmd) {
@@ -270,9 +270,11 @@ class Hyperinator {
        layoutTree.cells.length === termGroupTree.children.length) {
       let sizes
       if (layoutTree.type === 'LAYOUT_LEFTRIGHT') {
-        sizes = layoutTree.cells.map(cell => cell.sx / layoutTree.sx)
+        sizes = layoutTree.cells.map((cell, i) =>
+          (cell.sx + Boolean(i)) / layoutTree.sx)
       } else if (layoutTree.type === 'LAYOUT_TOPBOTTOM') {
-        sizes = layoutTree.cells.map(cell => cell.sy / layoutTree.sy)
+        sizes = layoutTree.cells.map((cell, i) =>
+          (cell.sy + Boolean(i)) / layoutTree.sy)
       }
       termgroupResize(this.store, termGroupUid, sizes)
       layoutTree.cells.forEach((c, i) =>
