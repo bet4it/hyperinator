@@ -196,12 +196,15 @@ class Hyperinator {
           this.work()
         }
       }
-    } else if (this.reuseIndex > 0) {
-      this.store.dispatch({
-        type: 'HYPERINATOR_SWITCH',
-        from: this.knownUids[0],
-        to: this.knownUids[this.reuseIndex]
-      })
+    } else {
+      if (this.reuseIndex > 0) {
+        this.store.dispatch({
+          type: 'HYPERINATOR_SWITCH',
+          from: this.knownUids[0],
+          to: this.knownUids[this.reuseIndex]
+        })
+      }
+      hyperinator = null
     }
   }
 
