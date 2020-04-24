@@ -335,7 +335,7 @@ exports.middleware = store => next => action => {
 
   // Check for hyperinator config
   if (type === 'SESSION_ADD_DATA') {
-    const testedData = /^\[hyperinator config]:(.*)/.exec(data)
+    const testedData = /^\[hyperinator config: (.*)]/.exec(data)
     if (testedData && testedData[1]) {
       store.dispatch({
         type: 'HYPERINATOR_LOAD',

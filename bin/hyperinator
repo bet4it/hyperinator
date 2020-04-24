@@ -9,10 +9,9 @@ const debug = require('debug')('hyperinator')
 const env = process.env
 
 // Check if user has hyperinator plugin installed
-const isPluginInstalled = () => {
-  const path = resolve(homedir(), '.hyper.js')
+const isPluginInstalled = (configPath) => {
   try {
-    const hyperConfig = readFileSync(path, 'utf8')
+    const hyperConfig = readFileSync(configPath, 'utf8')
     const script = new vm.Script(hyperConfig)
     const module = {}
     script.runInNewContext({module})
@@ -32,8 +31,10 @@ function start() {
     return
   }
 
-  if (!isPluginInstalled() && !env.HYPERINATOR) {
-    console.error(`Can't find hyperinator plugin in ~/.hyper.js.`)
+  const hyperCfgDir = process.platform === 'win32' ? resolve(env.APPDATA, 'Hyper') : homedir();
+  const hyperCfgPath = resolve(hyperCfgDir, '.hyper.js')
+  if (!isPluginInstalled(hyperCfgPath) && !env.HYPERINATOR) {
+    console.error(`Can't find hyperinator plugin in ${hyperCfgPath}`)
     return
   }
 
@@ -62,7 +63,7 @@ function start() {
         console.error(err)
         return
       }
-      console.log('[hyperinator config]:' + cfgPath)
+      console.log(`[hyperinator config: ${cfgPath}]`)
       break
     default:
       console.error('Unknown command!')
