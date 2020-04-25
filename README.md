@@ -22,7 +22,7 @@ $ hyper i hyperinator
 # Usage
 Hyperinator uses [tmuxp](https://github.com/tmux-python/tmuxp)'s YAML config style. If you use [tmuxinator](https://github.com/tmuxinator/tmuxinator) or [teamocil](https://github.com/remiprev/teamocil), you can use [tmuxp](https://github.com/tmux-python/tmuxp) to [import](http://tmuxp.git-pull.com/en/latest/cli.html#import) their configs.
 
-All configs must be stored in `~/.tmuxinator`.
+All configs must be stored in `~/.hyperinator`.
 
 Currently hyperinator only supports define layout with tmux's layout string, you can get it with `tmux list-windows -F "#{window_layout}"` in a tmux session.
 

@@ -62,14 +62,14 @@ class Hyperinator {
       gStartDir = untildify(config.start_directory)
     }
 
-    const gOpts = config.global_options
-    if (gOpts) {
-      Object.keys(gOpts).forEach(opt => {
+    const gOptions = config.global_options
+    if (gOptions) {
+      Object.keys(gOptions).forEach(opt => {
         if (opt === 'default-shell') {
-          gShell = gOpts[opt]
+          gShell = gOptions[opt]
         }
         if (opt === 'default-shell-args') {
-          gShellArgs = gOpts[opt]
+          gShellArgs = gOptions[opt]
           if (!Array.isArray(gShellArgs)) {
             gShellArgs = [gShellArgs]
           }
@@ -79,9 +79,9 @@ class Hyperinator {
     for (const [idx, win] of config.windows.entries()) {
       const i = win.panes.findIndex(cmd => cmd && cmd.reuse)
       if (i >= 0) {
-        const tmpPane = config.windows[0].panes[0]
+        const temporaryPane = config.windows[0].panes[0]
         config.windows[0].panes[0] = win.panes[i]
-        win.panes[i] = tmpPane
+        win.panes[i] = temporaryPane
         this.reuseIndex = i + config.windows.slice(0, idx)
           .reduce((acc, cur) => acc + cur.panes.length, 0)
         break
@@ -119,7 +119,7 @@ class Hyperinator {
         }
       }
 
-      const layoutPtr = {s: win.layout.substr(5)}
+      const layoutPtr = {s: win.layout.slice(5)}
       const layoutTree = this.layoutConstruct(null, layoutPtr)
       this.queue = this.queue.concat(generateQueue(layoutTree, true))
       this.queue.push({
@@ -215,10 +215,10 @@ class Hyperinator {
     const pos = posPattern.exec(layoutPtr.s)
     const lc = {}
     lc.parent = lcParent
-    lc.sx = parseInt(pos[1], 10)
-    lc.sy = parseInt(pos[2], 10)
-    lc.xoff = parseInt(pos[3], 10)
-    lc.yoff = parseInt(pos[4], 10)
+    lc.sx = Number.parseInt(pos[1], 10)
+    lc.sy = Number.parseInt(pos[2], 10)
+    lc.xoff = Number.parseInt(pos[3], 10)
+    lc.yoff = Number.parseInt(pos[4], 10)
     lc.cells = []
     lc.id = this.paneNum
     layoutPtr.s = pos[5]
@@ -231,7 +231,7 @@ class Hyperinator {
       case '}':
       case ']':
       case undefined: {
-        this.paneNum = this.paneNum + 1
+        this.paneNum += 1
         return lc
       }
       case '{':
@@ -243,7 +243,7 @@ class Hyperinator {
       default:
     }
     do {
-      layoutPtr.s = layoutPtr.s.substr(1)
+      layoutPtr.s = layoutPtr.s.slice(1)
       lc.cells.push(this.layoutConstruct(lc, layoutPtr))
     } while (layoutPtr.s[0] === ',')
 
@@ -262,7 +262,7 @@ class Hyperinator {
         console.error('Layout format wrong!')
         break
     }
-    layoutPtr.s = layoutPtr.s.substr(1)
+    layoutPtr.s = layoutPtr.s.slice(1)
     return lc
   }
 

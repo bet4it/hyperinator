@@ -1,6 +1,6 @@
 {
   "name": "hyperinator",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "A layout automation plugin for Hyper.app",
   "repository": "bet4it/hyperinator",
   "author": "Bet4 <0xbet4@gmail.com>",
@@ -9,7 +9,8 @@
     "hyperinator": "bin/hyperinator"
   },
   "keywords": [
-    "hyper"
+    "hyper",
+    "hyper-plugin"
   ],
   "scripts": {
     "test": "xo"
@@ -20,7 +21,8 @@
     "semicolon": false,
     "rules": {
       "padding-line-between-statements": [
-        "error", {
+        "error",
+        {
           "blankLine": "any",
           "prev": "multiline-block-like",
           "next": "*"
@@ -33,11 +35,11 @@
     ]
   },
   "devDependencies": {
-    "xo": "^0.24.0"
+    "xo": "^0.29.1"
   },
   "dependencies": {
-    "js-yaml": "^3.12.0",
-    "untildify": "^3.0.3",
+    "js-yaml": "^3.13.1",
+    "untildify": "^4.0.0",
     "debug": "^4.1.1"
   }
 }
