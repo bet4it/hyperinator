@@ -63,7 +63,9 @@ function start() {
         console.error(err)
         return
       }
-      console.log(`[hyperinator config: ${cfgPath}]`)
+      setTimeout(() => {
+        console.log(`[hyperinator config: ${cfgPath}]`)
+      }, 100)
       break
     default:
       console.error('Unknown command!')
