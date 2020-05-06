@@ -25,7 +25,7 @@ const isPluginInstalled = (configPath) => {
 }
 
 
-function start() {
+async function start() {
   if (env.TERM_PROGRAM !== 'Hyper' && env.TERM_PROGRAM !== 'HyperTerm' && !env.HYPERINATOR) {
     console.error('You need to use Hyper.app to run this command')
     return
@@ -63,6 +63,7 @@ function start() {
         console.error(err)
         return
       }
+      await new Promise(r=>setTimeout(r, 100))
       console.log(`[hyperinator config: ${cfgPath}]`)
       break
     default:
