@@ -16,7 +16,7 @@ function generateQueue(converted, initial) {
   let q = []
 
   if (Array.isArray(converted.cells)) {
-    converted.cells.forEach((cell, i) => {
+    for (const [i, cell] of converted.cells.entries()) {
       if (i > 0) {
         q.push({
           action: 'split',
@@ -35,10 +35,10 @@ function generateQueue(converted, initial) {
           index: cell.id
         })
       }
-    })
-    converted.cells.forEach(cell => {
+    }
+    for (const cell of converted.cells) {
       q = q.concat(generateQueue(cell))
-    })
+    }
   }
   return q
 }
@@ -64,7 +64,7 @@ class Hyperinator {
 
     const gOptions = config.global_options
     if (gOptions) {
-      Object.keys(gOptions).forEach(opt => {
+      for (const opt of Object.keys(gOptions)) {
         if (opt === 'default-shell') {
           gShell = gOptions[opt]
         }
@@ -74,7 +74,7 @@ class Hyperinator {
             gShellArgs = [gShellArgs]
           }
         }
-      })
+      }
     }
     for (const [idx, win] of config.windows.entries()) {
       const i = win.panes.findIndex(cmd => cmd && cmd.reuse)
@@ -82,19 +82,21 @@ class Hyperinator {
         const temporaryPane = config.windows[0].panes[0]
         config.windows[0].panes[0] = win.panes[i]
         win.panes[i] = temporaryPane
-        this.reuseIndex = i + config.windows.slice(0, idx)
-          .reduce((acc, cur) => acc + cur.panes.length, 0)
+        this.reuseIndex = i
+        for (const win of config.windows.slice(0, idx)) {
+          this.reuseIndex += win.panes.length
+        }
         break
       }
     }
 
-    config.windows.forEach(win => {
+    for (const win of config.windows) {
       let focusIndex
       let startDir = gStartDir
       if (win.start_directory) {
         startDir = untildify(win.start_directory)
       }
-      win.panes.forEach(cmd => {
+      for (const cmd of win.panes) {
         const args = {shell: gShell, shellArgs: gShellArgs}
         let cwd = startDir
         const index = this.panes.length
@@ -110,13 +112,9 @@ class Hyperinator {
           args.cwd = cwd
         }
         this.panes.push({index, args, cmd})
-      })
+      }
       if (win.focus) {
-        if (typeof focusIndex === 'undefined') {
-          gFocusIndex = this.panes.length - 1
-        } else {
-          gFocusIndex = focusIndex
-        }
+        gFocusIndex = typeof focusIndex === 'undefined' ? this.panes.length - 1 : focusIndex
       }
 
       const layoutPtr = {s: win.layout.slice(5)}
@@ -137,7 +135,7 @@ class Hyperinator {
         action: 'split',
         index: this.paneNum
       })
-    })
+    }
 
     this.queue.pop()
     if (typeof gFocusIndex !== 'undefined') {
@@ -178,7 +176,9 @@ class Hyperinator {
             } else if (typeof pane.cmd.shell_command === 'string') {
               runCommand(activeUid, pane.cmd.shell_command)
             } else if (Array.isArray(pane.cmd.shell_command)) {
-              pane.cmd.shell_command.forEach(cmd => runCommand(activeUid, cmd))
+              for (const cmd of pane.cmd.shell_command) {
+                runCommand(activeUid, cmd)
+              }
             }
           }
           this.work()
@@ -280,8 +280,9 @@ class Hyperinator {
           (cell.sy + Boolean(i)) / layoutTree.sy)
       }
       termgroupResize(this.store, termGroupUid, sizes)
-      layoutTree.cells.forEach((c, i) =>
-        this.layoutResize(c, termGroupTree.children[i]))
+      for (const [i, c] of layoutTree.cells.entries()) {
+        this.layoutResize(c, termGroupTree.children[i])
+      }
     }
   }
 }
@@ -346,20 +347,17 @@ exports.middleware = store => next => action => {
   }
 
   // Check for sessions
-  if (type === 'SESSION_ADD' && hyperinator) {
-    // Check if it's a new session
-    if (!hyperinator.knownUids.includes(uid)) {
-      hyperinator.knownUids.push(uid)
-      setTimeout(() => {
-        hyperinator.work()
-      }, 0)
-    }
+  if (type === 'SESSION_ADD' && hyperinator && !hyperinator.knownUids.includes(uid)) {
+    hyperinator.knownUids.push(uid)
+    setTimeout(() => {
+      hyperinator.work()
+    }, 0)
   }
 
   // Load a config
   if (type === 'HYPERINATOR_LOAD') {
     const {sessions} = store.getState()
-    const config = yaml.safeLoad(fs.readFileSync(data, 'utf8'))
+    const config = yaml.load(fs.readFileSync(data, 'utf8'))
     hyperinator = new Hyperinator(config, store)
     hyperinator.knownUids.push(sessions.activeUid)
     return
