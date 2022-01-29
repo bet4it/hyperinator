@@ -4,7 +4,6 @@ const {homedir} = require('os')
 const {resolve} = require('path')
 const vm = require('vm')
 const yaml = require('js-yaml')
-const debug = require('debug')('hyperinator')
 
 const env = process.env
 
@@ -19,7 +18,7 @@ const isPluginInstalled = (configPath) => {
     const pluginArray = plugins.concat(localPlugins)
     return pluginArray.includes('hyperinator')
   } catch (err) {
-    debug(err)
+    console.error(err);
     return false
   }
 }
@@ -31,7 +30,10 @@ function start() {
     return
   }
 
-  const hyperCfgDir = process.platform === 'win32' ? resolve(env.APPDATA, 'Hyper') : homedir();
+  const hyperCfgDir =
+    env.XDG_CONFIG_HOME !== undefined
+      ? resolve(env.XDG_CONFIG_HOME, 'hyper')
+      : process.platform == 'win32' ? resolve(env.APPDATA, 'Hyper') : homedir();
   const hyperCfgPath = resolve(hyperCfgDir, '.hyper.js')
   if (!isPluginInstalled(hyperCfgPath) && !env.HYPERINATOR) {
     console.error(`Can't find hyperinator plugin in ${hyperCfgPath}`)

@@ -1,6 +1,6 @@
 {
   "name": "hyperinator",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "A layout automation plugin for Hyper.app",
   "repository": "bet4it/hyperinator",
   "author": "Bet4 <0xbet4@gmail.com>",
@@ -37,10 +37,10 @@
     ]
   },
   "devDependencies": {
-    "xo": "^0.38.2"
+    "xo": "^0.39.1"
   },
   "dependencies": {
-    "js-yaml": "^4.0.0",
+    "js-yaml": "^4.1.0",
     "untildify": "^4.0.0"
   }
 }
