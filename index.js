@@ -1,5 +1,5 @@
 const fs = require('fs')
-const yaml = require('js-yaml')
+const yaml = require('yaml')
 const untildify = require('untildify')
 
 let hyperinator
@@ -357,7 +357,7 @@ exports.middleware = store => next => action => {
   // Load a config
   if (type === 'HYPERINATOR_LOAD') {
     const {sessions} = store.getState()
-    const config = yaml.load(fs.readFileSync(data, 'utf8'))
+    const config = yaml.parse(fs.readFileSync(data, 'utf8'))
     hyperinator = new Hyperinator(config, store)
     hyperinator.knownUids.push(sessions.activeUid)
     return
